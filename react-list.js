@@ -42,6 +42,8 @@
   var SIZE_KEYS = { x: 'width', y: 'height' };
 
   var NOOP = function NOOP() {};
+  var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+  var cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
 
   var _default = (function (_Component) {
     _inherits(_default, _Component);
@@ -113,7 +115,7 @@
 
       this.state = { from: from, size: size, itemsPerRow: itemsPerRow };
       this.cache = {};
-      this.ricHandle = null;
+      this.rafId = null;
       this.refCallback = this.refCallback.bind(this);
     }
 
@@ -150,8 +152,8 @@
         window.removeEventListener('resize', this.updateFrame);
         this.scrollParent.removeEventListener('scroll', this.updateFrame);
         this.scrollParent.removeEventListener('mousewheel', NOOP);
-        if (this.ricHandle !== null) {
-          window.cancelIdleCallback(this.ricHandle);
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId);
         }
       }
     }, {
@@ -319,18 +321,18 @@
       value: function setNextState(state, cb) {
         var _this = this;
 
-        if (!window.requestIdleCallback) {
+        if (!requestAnimationFrame) {
           this.setState(state, cb);
           return;
         }
 
-        if (this.ricHandle !== null) {
+        if (this.rafId !== null) {
           return;
         }
 
-        this.ricHandle = requestIdleCallback(function () {
+        this.rafId = requestAnimationFrame(function () {
           _this.setState(state, cb);
-          _this.ricHandle = null;
+          _this.rafId = null;
         });
       }
     }, {
