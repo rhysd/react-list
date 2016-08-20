@@ -62,6 +62,7 @@ export default class extends Component {
     this.state = {from, size, itemsPerRow};
     this.cache = {};
     this.rafId = null;
+    this.refCallback = this.refCallback.bind(this);
   }
 
   componentWillReceiveProps(next) {
@@ -415,12 +416,17 @@ export default class extends Component {
     return [first, last];
   }
 
+  refCallback(c) {
+    this.items = c;
+    return this.items;
+  }
+
   renderItems() {
     const {itemRenderer, itemsRenderer} = this.props;
     const {from, size} = this.state;
     const items = [];
     for (let i = 0; i < size; ++i) items.push(itemRenderer(from + i, i));
-    return itemsRenderer(items, c => this.items = c);
+    return itemsRenderer(items, this.refCallback);
   }
 
   render() {

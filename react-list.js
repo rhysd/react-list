@@ -116,6 +116,7 @@
       this.state = { from: from, size: size, itemsPerRow: itemsPerRow };
       this.cache = {};
       this.rafId = null;
+      this.refCallback = this.refCallback.bind(this);
     }
 
     _createClass(_default, [{
@@ -557,10 +558,14 @@
         return [first, last];
       }
     }, {
+      key: 'refCallback',
+      value: function refCallback(c) {
+        this.items = c;
+        return this.items;
+      }
+    }, {
       key: 'renderItems',
       value: function renderItems() {
-        var _this2 = this;
-
         var _props8 = this.props;
         var itemRenderer = _props8.itemRenderer;
         var itemsRenderer = _props8.itemsRenderer;
@@ -571,9 +576,7 @@
         var items = [];
         for (var i = 0; i < size; ++i) {
           items.push(itemRenderer(from + i, i));
-        }return itemsRenderer(items, function (c) {
-          return _this2.items = c;
-        });
+        }return itemsRenderer(items, this.refCallback);
       }
     }, {
       key: 'render',
