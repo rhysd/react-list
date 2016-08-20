@@ -207,13 +207,27 @@ export default class extends Component {
   }
 
   updateFrame(cb) {
-    this.updateScrollParent();
-    if (typeof cb != 'function') cb = NOOP;
-    switch (this.props.type) {
-    case 'simple': return this.updateSimpleFrame(cb);
-    case 'variable': return this.updateVariableFrame(cb);
-    case 'uniform': return this.updateUniformFrame(cb);
+    if (this.rafId !== null) {
+      return;
     }
+
+    const update = () => {
+      this.updateScrollParent();
+      if (typeof cb != 'function') cb = NOOP;
+      this.rafId = null;
+      switch (this.props.type) {
+      case 'simple': return this.updateSimpleFrame(cb);
+      case 'variable': return this.updateVariableFrame(cb);
+      case 'uniform': return this.updateUniformFrame(cb);
+      }
+    }
+
+    if (!requestAnimationFrame) {
+      update();
+      return;
+    }
+
+    this.rafId = requestAnimationFrame(update);
   }
 
   updateScrollParent() {
@@ -226,22 +240,6 @@ export default class extends Component {
     }
     this.scrollParent.addEventListener('scroll', this.updateFrame, {passive: true});
     this.scrollParent.addEventListener('mousewheel', NOOP);
-  }
-
-  setNextState(state, cb) {
-    if (!requestAnimationFrame) {
-      this.setState(state, cb);
-      return;
-    }
-
-    if (this.rafId !== null) {
-      return;
-    }
-
-    this.rafId = requestAnimationFrame(() => {
-      this.setState(state, cb);
-      this.rafId = null;
-    });
   }
 
   updateSimpleFrame(cb) {
@@ -260,7 +258,7 @@ export default class extends Component {
     if (elEnd > end) return cb();
 
     const {pageSize, length} = this.props;
-    this.setNextState({size: Math.min(this.state.size + pageSize, length)}, cb);
+    this.setState({size: Math.min(this.state.size + pageSize, length)}, cb);
   }
 
   updateVariableFrame(cb) {
@@ -292,7 +290,7 @@ export default class extends Component {
       ++size;
     }
 
-    this.setNextState({from, size}, cb);
+    this.setState({from, size}, cb);
   }
 
   updateUniformFrame(cb) {
@@ -309,7 +307,7 @@ export default class extends Component {
       this.props
     );
 
-    return this.setNextState({itemsPerRow, from, itemSize, size}, cb);
+    return this.setState({itemsPerRow, from, itemSize, size}, cb);
   }
 
   getSpaceBefore(index, cache = {}) {
