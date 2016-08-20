@@ -292,32 +292,16 @@
     }, {
       key: 'updateFrame',
       value: function updateFrame(cb) {
-        var _this = this;
-
-        if (this.rafId !== null) {
-          return;
+        this.updateScrollParent();
+        if (typeof cb != 'function') cb = NOOP;
+        switch (this.props.type) {
+          case 'simple':
+            return this.updateSimpleFrame(cb);
+          case 'variable':
+            return this.updateVariableFrame(cb);
+          case 'uniform':
+            return this.updateUniformFrame(cb);
         }
-
-        var update = function update() {
-          _this.updateScrollParent();
-          if (typeof cb != 'function') cb = NOOP;
-          _this.rafId = null;
-          switch (_this.props.type) {
-            case 'simple':
-              return _this.updateSimpleFrame(cb);
-            case 'variable':
-              return _this.updateVariableFrame(cb);
-            case 'uniform':
-              return _this.updateUniformFrame(cb);
-          }
-        };
-
-        if (!requestAnimationFrame) {
-          update();
-          return;
-        }
-
-        this.rafId = requestAnimationFrame(update);
       }
     }, {
       key: 'updateScrollParent',
@@ -331,6 +315,25 @@
         }
         this.scrollParent.addEventListener('scroll', this.updateFrame, { passive: true });
         this.scrollParent.addEventListener('mousewheel', NOOP);
+      }
+    }, {
+      key: 'setNextState',
+      value: function setNextState(state, cb) {
+        var _this = this;
+
+        if (!requestAnimationFrame) {
+          this.setState(state, cb);
+          return;
+        }
+
+        if (this.rafId !== null) {
+          return;
+        }
+
+        this.rafId = requestAnimationFrame(function () {
+          _this.setState(state, cb);
+          _this.rafId = null;
+        });
       }
     }, {
       key: 'updateSimpleFrame',
@@ -356,7 +359,7 @@
         var pageSize = _props5.pageSize;
         var length = _props5.length;
 
-        this.setState({ size: Math.min(this.state.size + pageSize, length) }, cb);
+        this.setNextState({ size: Math.min(this.state.size + pageSize, length) }, cb);
       }
     }, {
       key: 'updateVariableFrame',
@@ -395,7 +398,7 @@
           ++size;
         }
 
-        this.setState({ from: from, size: size }, cb);
+        this.setNextState({ from: from, size: size }, cb);
       }
     }, {
       key: 'updateUniformFrame',
@@ -417,7 +420,7 @@
         var from = _constrain2.from;
         var size = _constrain2.size;
 
-        return this.setState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
+        return this.setNextState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
       }
     }, {
       key: 'getSpaceBefore',
