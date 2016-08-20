@@ -15,12 +15,6 @@ const SCROLL_START_KEYS = {x: 'scrollLeft', y: 'scrollTop'};
 const SIZE_KEYS = {x: 'width', y: 'height'};
 
 const NOOP = () => {};
-const requestAnimationFrame =
-        window.requestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.msRequestAnimationFrame;
-const cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
 
 export default class extends Component {
   static displayName = 'ReactList';
@@ -61,7 +55,7 @@ export default class extends Component {
       this.constrain(initialIndex, pageSize, itemsPerRow, this.props);
     this.state = {from, size, itemsPerRow};
     this.cache = {};
-    this.rafId = null;
+    this.ricHandle = null;
     this.refCallback = this.refCallback.bind(this);
   }
 
@@ -88,8 +82,8 @@ export default class extends Component {
     window.removeEventListener('resize', this.updateFrame);
     this.scrollParent.removeEventListener('scroll', this.updateFrame);
     this.scrollParent.removeEventListener('mousewheel', NOOP);
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
+    if (this.ricHandle !== null) {
+      window.cancelIdleCallback(this.ricHandle);
     }
   }
 
@@ -229,18 +223,18 @@ export default class extends Component {
   }
 
   setNextState(state, cb) {
-    if (!requestAnimationFrame) {
+    if (!window.requestIdleCallback) {
       this.setState(state, cb);
       return;
     }
 
-    if (this.rafId !== null) {
+    if (this.ricHandle !== null) {
       return;
     }
 
-    this.rafId = requestAnimationFrame(() => {
+    this.ricHandle = requestIdleCallback(() => {
       this.setState(state, cb);
-      this.rafId = null;
+      this.ricHandle = null;
     });
   }
 

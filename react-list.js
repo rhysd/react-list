@@ -42,8 +42,6 @@
   var SIZE_KEYS = { x: 'width', y: 'height' };
 
   var NOOP = function NOOP() {};
-  var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-  var cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
 
   var _default = (function (_Component) {
     _inherits(_default, _Component);
@@ -115,7 +113,7 @@
 
       this.state = { from: from, size: size, itemsPerRow: itemsPerRow };
       this.cache = {};
-      this.rafId = null;
+      this.ricHandle = null;
       this.refCallback = this.refCallback.bind(this);
     }
 
@@ -152,8 +150,8 @@
         window.removeEventListener('resize', this.updateFrame);
         this.scrollParent.removeEventListener('scroll', this.updateFrame);
         this.scrollParent.removeEventListener('mousewheel', NOOP);
-        if (this.rafId !== null) {
-          cancelAnimationFrame(this.rafId);
+        if (this.ricHandle !== null) {
+          window.cancelIdleCallback(this.ricHandle);
         }
       }
     }, {
@@ -321,18 +319,18 @@
       value: function setNextState(state, cb) {
         var _this = this;
 
-        if (!requestAnimationFrame) {
+        if (!window.requestIdleCallback) {
           this.setState(state, cb);
           return;
         }
 
-        if (this.rafId !== null) {
+        if (this.ricHandle !== null) {
           return;
         }
 
-        this.rafId = requestAnimationFrame(function () {
+        this.ricHandle = requestIdleCallback(function () {
           _this.setState(state, cb);
-          _this.rafId = null;
+          _this.ricHandle = null;
         });
       }
     }, {
