@@ -41,7 +41,6 @@
   var SCROLL_START_KEYS = { x: 'scrollLeft', y: 'scrollTop' };
   var SIZE_KEYS = { x: 'width', y: 'height' };
 
-  var NOOP = function NOOP() {};
   var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
   var cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
 
@@ -151,7 +150,6 @@
       value: function componentWillUnmount() {
         window.removeEventListener('resize', this.updateFrame);
         this.scrollParent.removeEventListener('scroll', this.updateFrame);
-        this.scrollParent.removeEventListener('mousewheel', NOOP);
         if (this.rafId !== null) {
           cancelAnimationFrame(this.rafId);
         }
@@ -291,16 +289,15 @@
       }
     }, {
       key: 'updateFrame',
-      value: function updateFrame(cb) {
+      value: function updateFrame() {
         this.updateScrollParent();
-        if (typeof cb != 'function') cb = NOOP;
         switch (this.props.type) {
           case 'simple':
-            return this.updateSimpleFrame(cb);
+            return this.updateSimpleFrame();
           case 'variable':
-            return this.updateVariableFrame(cb);
+            return this.updateVariableFrame();
           case 'uniform':
-            return this.updateUniformFrame(cb);
+            return this.updateUniformFrame();
         }
       }
     }, {
@@ -311,18 +308,16 @@
         if (prev === this.scrollParent) return;
         if (prev) {
           prev.removeEventListener('scroll', this.updateFrame);
-          prev.removeEventListener('mousewheel', NOOP);
         }
         this.scrollParent.addEventListener('scroll', this.updateFrame, { passive: true });
-        this.scrollParent.addEventListener('mousewheel', NOOP);
       }
     }, {
       key: 'setNextState',
-      value: function setNextState(state, cb) {
+      value: function setNextState(state) {
         var _this = this;
 
         if (!requestAnimationFrame) {
-          this.setState(state, cb);
+          this.setState(state);
           return;
         }
 
@@ -331,13 +326,13 @@
         }
 
         this.rafId = requestAnimationFrame(function () {
-          _this.setState(state, cb);
+          _this.setState(state);
           _this.rafId = null;
         });
       }
     }, {
       key: 'updateSimpleFrame',
-      value: function updateSimpleFrame(cb) {
+      value: function updateSimpleFrame() {
         var _getStartAndEnd = this.getStartAndEnd();
 
         var end = _getStartAndEnd.end;
@@ -353,17 +348,17 @@
           elEnd = this.getOffset(lastItemEl) + lastItemEl[OFFSET_SIZE_KEYS[axis]] - this.getOffset(firstItemEl);
         }
 
-        if (elEnd > end) return cb();
+        if (elEnd > end) return;
 
         var _props5 = this.props;
         var pageSize = _props5.pageSize;
         var length = _props5.length;
 
-        this.setNextState({ size: Math.min(this.state.size + pageSize, length) }, cb);
+        this.setNextState({ size: Math.min(this.state.size + pageSize, length) });
       }
     }, {
       key: 'updateVariableFrame',
-      value: function updateVariableFrame(cb) {
+      value: function updateVariableFrame() {
         if (!this.props.itemSizeGetter) this.cacheSizes();
 
         var _getStartAndEnd2 = this.getStartAndEnd();
@@ -398,17 +393,17 @@
           ++size;
         }
 
-        this.setNextState({ from: from, size: size }, cb);
+        this.setNextState({ from: from, size: size });
       }
     }, {
       key: 'updateUniformFrame',
-      value: function updateUniformFrame(cb) {
+      value: function updateUniformFrame() {
         var _getItemSizeAndItemsPerRow = this.getItemSizeAndItemsPerRow();
 
         var itemSize = _getItemSizeAndItemsPerRow.itemSize;
         var itemsPerRow = _getItemSizeAndItemsPerRow.itemsPerRow;
 
-        if (!itemSize || !itemsPerRow) return cb();
+        if (!itemSize || !itemsPerRow) return;
 
         var _getStartAndEnd3 = this.getStartAndEnd();
 
@@ -420,7 +415,7 @@
         var from = _constrain2.from;
         var size = _constrain2.size;
 
-        return this.setNextState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
+        return this.setNextState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size });
       }
     }, {
       key: 'getSpaceBefore',

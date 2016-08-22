@@ -14,7 +14,6 @@ const SCROLL_SIZE_KEYS = {x: 'scrollWidth', y: 'scrollHeight'};
 const SCROLL_START_KEYS = {x: 'scrollLeft', y: 'scrollTop'};
 const SIZE_KEYS = {x: 'width', y: 'height'};
 
-const NOOP = () => {};
 const requestAnimationFrame =
         window.requestAnimationFrame ||
         window.mozRequestAnimationFrame ||
@@ -87,7 +86,6 @@ export default class extends Component {
   componentWillUnmount() {
     window.removeEventListener('resize', this.updateFrame);
     this.scrollParent.removeEventListener('scroll', this.updateFrame);
-    this.scrollParent.removeEventListener('mousewheel', NOOP);
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
     }
@@ -206,13 +204,12 @@ export default class extends Component {
     return {itemSize, itemsPerRow};
   }
 
-  updateFrame(cb) {
+  updateFrame() {
     this.updateScrollParent();
-    if (typeof cb != 'function') cb = NOOP;
     switch (this.props.type) {
-    case 'simple': return this.updateSimpleFrame(cb);
-    case 'variable': return this.updateVariableFrame(cb);
-    case 'uniform': return this.updateUniformFrame(cb);
+    case 'simple': return this.updateSimpleFrame();
+    case 'variable': return this.updateVariableFrame();
+    case 'uniform': return this.updateUniformFrame();
     }
   }
 
@@ -222,15 +219,13 @@ export default class extends Component {
     if (prev === this.scrollParent) return;
     if (prev) {
       prev.removeEventListener('scroll', this.updateFrame);
-      prev.removeEventListener('mousewheel', NOOP);
     }
     this.scrollParent.addEventListener('scroll', this.updateFrame, {passive: true});
-    this.scrollParent.addEventListener('mousewheel', NOOP);
   }
 
-  setNextState(state, cb) {
+  setNextState(state) {
     if (!requestAnimationFrame) {
-      this.setState(state, cb);
+      this.setState(state);
       return;
     }
 
@@ -239,12 +234,12 @@ export default class extends Component {
     }
 
     this.rafId = requestAnimationFrame(() => {
-      this.setState(state, cb);
+      this.setState(state);
       this.rafId = null;
     });
   }
 
-  updateSimpleFrame(cb) {
+  updateSimpleFrame() {
     const {end} = this.getStartAndEnd();
     const itemEls = findDOMNode(this.items).children;
     let elEnd = 0;
@@ -257,13 +252,13 @@ export default class extends Component {
         this.getOffset(firstItemEl);
     }
 
-    if (elEnd > end) return cb();
+    if (elEnd > end) return;
 
     const {pageSize, length} = this.props;
-    this.setNextState({size: Math.min(this.state.size + pageSize, length)}, cb);
+    this.setNextState({size: Math.min(this.state.size + pageSize, length)});
   }
 
-  updateVariableFrame(cb) {
+  updateVariableFrame() {
     if (!this.props.itemSizeGetter) this.cacheSizes();
 
     const {start, end} = this.getStartAndEnd();
@@ -292,13 +287,13 @@ export default class extends Component {
       ++size;
     }
 
-    this.setNextState({from, size}, cb);
+    this.setNextState({from, size});
   }
 
-  updateUniformFrame(cb) {
+  updateUniformFrame() {
     let {itemSize, itemsPerRow} = this.getItemSizeAndItemsPerRow();
 
-    if (!itemSize || !itemsPerRow) return cb();
+    if (!itemSize || !itemsPerRow) return;
 
     const {start, end} = this.getStartAndEnd();
 
@@ -309,7 +304,7 @@ export default class extends Component {
       this.props
     );
 
-    return this.setNextState({itemsPerRow, from, itemSize, size}, cb);
+    return this.setNextState({itemsPerRow, from, itemSize, size});
   }
 
   getSpaceBefore(index, cache = {}) {
