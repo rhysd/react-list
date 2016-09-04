@@ -316,6 +316,10 @@
       value: function setNextState(state) {
         var _this = this;
 
+        if (this.state.from === state.from && this.state.size === state.size) {
+          return;
+        }
+
         if (!requestAnimationFrame) {
           this.setState(state);
           return;

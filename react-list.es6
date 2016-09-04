@@ -224,6 +224,10 @@ export default class extends Component {
   }
 
   setNextState(state) {
+    if (this.state.from === state.from && this.state.size === state.size) {
+        return;
+    }
+
     if (!requestAnimationFrame) {
       this.setState(state);
       return;
